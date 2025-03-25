@@ -66,10 +66,7 @@ const options = {
     ],
   },
   apis: [
-    path.resolve(__dirname, "../controllers/*.ts"),
-    path.resolve(__dirname, "../routes/*.ts"),
-    path.resolve(__dirname, "../models/*.ts"),
-    path.resolve(__dirname, "../schemas/*.ts"),
+    path.resolve(__dirname, "../docs/swagger-docs.ts"), // Add this line
   ],
 };
 

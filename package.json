@@ -10,9 +10,11 @@
     "lint": "eslint . --ext .ts",
     "test": "jest",
     "docs": "ts-node src/scripts/generate-docs.ts",
-    "migrate": "ts-node src/scripts/setup-db.ts",
-    "migrate:only": "ts-node src/scripts/setup-db.ts --skip-seeds",
-    "seed:only": "ts-node src/scripts/setup-db.ts --skip-migrations"
+    "db:setup": "ts-node src/scripts/setup-db.ts",
+    "db:migrate": "ts-node src/scripts/setup-db.ts --skip-seeds",
+    "db:seed": "ts-node src/scripts/setup-db.ts --skip-migrations",
+    "db:clear": "ts-node src/scripts/setup-db.ts --force-clear",
+    "db:refresh": "ts-node src/scripts/setup-db.ts --refresh"
   },
   "keywords": [],
   "author": "",

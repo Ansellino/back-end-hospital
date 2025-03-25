@@ -1,0 +1,2466 @@
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: number
+ *           example: 1
+ *         username:
+ *           type: string
+ *           example: johndoe
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: john.doe@example.com
+ *         firstName:
+ *           type: string
+ *           example: John
+ *         lastName:
+ *           type: string
+ *           example: Doe
+ *         role:
+ *           type: string
+ *           enum: [admin, doctor, nurse, receptionist, patient]
+ *           example: doctor
+ *         permissions:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [view:patients, edit:patients, view:medical-records]
+ *         staffId:
+ *           type: string
+ *           example: STAFF-001
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     Patient:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: number
+ *           example: 1
+ *         firstName:
+ *           type: string
+ *           example: Jane
+ *         lastName:
+ *           type: string
+ *           example: Smith
+ *         dateOfBirth:
+ *           type: string
+ *           format: date
+ *           example: 1985-06-15
+ *         gender:
+ *           type: string
+ *           enum: [male, female, other]
+ *           example: female
+ *         contactNumber:
+ *           type: string
+ *           example: 555-123-4567
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: jane.smith@example.com
+ *         address:
+ *           type: string
+ *           example: 123 Main St, Anytown, CA 12345
+ *         emergencyContactName:
+ *           type: string
+ *           example: John Smith
+ *         emergencyContactNumber:
+ *           type: string
+ *           example: 555-987-6543
+ *         bloodType:
+ *           type: string
+ *           example: A+
+ *         allergies:
+ *           type: string
+ *           example: Penicillin, Peanuts
+ *         medicalHistory:
+ *           type: string
+ *           example: Prior heart surgery, Asthma
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         deletedAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *
+ *     Staff:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: STAFF-001
+ *         firstName:
+ *           type: string
+ *           example: John
+ *         lastName:
+ *           type: string
+ *           example: Doe
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: john.doe@hospital.com
+ *         contactNumber:
+ *           type: string
+ *           example: 555-987-6543
+ *         role:
+ *           type: string
+ *           enum: [doctor, nurse, admin, receptionist, pharmacist]
+ *           example: doctor
+ *         specialization:
+ *           type: string
+ *           example: Cardiology
+ *         department:
+ *           type: string
+ *           example: Medical
+ *         joinDate:
+ *           type: string
+ *           format: date
+ *           example: 2020-01-15
+ *         status:
+ *           type: string
+ *           enum: [active, on-leave, inactive]
+ *           example: active
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     Appointment:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: number
+ *           example: 1
+ *         patientId:
+ *           type: number
+ *           example: 5
+ *         doctorId:
+ *           type: string
+ *           example: STAFF-001
+ *         title:
+ *           type: string
+ *           example: Annual Physical
+ *         startTime:
+ *           type: string
+ *           format: date-time
+ *           example: 2023-12-01T09:00:00Z
+ *         endTime:
+ *           type: string
+ *           format: date-time
+ *           example: 2023-12-01T10:00:00Z
+ *         status:
+ *           type: string
+ *           enum: [scheduled, completed, cancelled, no-show]
+ *           example: scheduled
+ *         type:
+ *           type: string
+ *           enum: [initial, follow-up, consultation, procedure, emergency]
+ *           example: initial
+ *         notes:
+ *           type: string
+ *           example: Patient reported mild fever and cough
+ *           nullable: true
+ *         location:
+ *           type: string
+ *           example: Room 203
+ *           nullable: true
+ *         reason:
+ *           type: string
+ *           example: Annual checkup
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     AppointmentCreate:
+ *       type: object
+ *       required: [patientId, doctorId, title, startTime, endTime, status, type]
+ *       properties:
+ *         patientId:
+ *           type: number
+ *           example: 5
+ *         doctorId:
+ *           type: string
+ *           example: STAFF-001
+ *         title:
+ *           type: string
+ *           example: Annual Physical
+ *         startTime:
+ *           type: string
+ *           format: date-time
+ *           example: 2023-12-01T09:00:00Z
+ *         endTime:
+ *           type: string
+ *           format: date-time
+ *           example: 2023-12-01T10:00:00Z
+ *         status:
+ *           type: string
+ *           enum: [scheduled, completed, cancelled, no-show]
+ *           example: scheduled
+ *         type:
+ *           type: string
+ *           enum: [initial, follow-up, consultation, procedure, emergency]
+ *           example: initial
+ *         notes:
+ *           type: string
+ *           example: Patient reported mild fever and cough
+ *         location:
+ *           type: string
+ *           example: Room 203
+ *         reason:
+ *           type: string
+ *           example: Annual checkup
+ *
+ *     AppointmentUpdate:
+ *       type: object
+ *       properties:
+ *         patientId:
+ *           type: number
+ *           example: 5
+ *         doctorId:
+ *           type: string
+ *           example: STAFF-001
+ *         title:
+ *           type: string
+ *           example: Annual Physical
+ *         startTime:
+ *           type: string
+ *           format: date-time
+ *           example: 2023-12-01T09:00:00Z
+ *         endTime:
+ *           type: string
+ *           format: date-time
+ *           example: 2023-12-01T10:00:00Z
+ *         status:
+ *           type: string
+ *           enum: [scheduled, completed, cancelled, no-show]
+ *           example: completed
+ *         type:
+ *           type: string
+ *           enum: [initial, follow-up, consultation, procedure, emergency]
+ *           example: follow-up
+ *         notes:
+ *           type: string
+ *           example: Patient reported improvement in symptoms
+ *         location:
+ *           type: string
+ *           example: Room 205
+ *         reason:
+ *           type: string
+ *           example: Follow-up visit
+ *
+ *     AppointmentStats:
+ *       type: object
+ *       properties:
+ *         totalAppointments:
+ *           type: integer
+ *           example: 150
+ *         todayAppointments:
+ *           type: integer
+ *           example: 12
+ *         upcomingAppointments:
+ *           type: integer
+ *           example: 45
+ *         statusDistribution:
+ *           type: object
+ *           properties:
+ *             scheduled:
+ *               type: integer
+ *               example: 80
+ *             completed:
+ *               type: integer
+ *               example: 45
+ *             cancelled:
+ *               type: integer
+ *               example: 20
+ *             no-show:
+ *               type: integer
+ *               example: 5
+ *
+ *     MedicalRecord:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: number
+ *           example: 1
+ *         patientId:
+ *           type: number
+ *           example: 5
+ *         doctorId:
+ *           type: string
+ *           example: STAFF-001
+ *         appointmentId:
+ *           type: number
+ *           example: 1
+ *           nullable: true
+ *         visitDate:
+ *           type: string
+ *           format: date-time
+ *           example: 2023-12-01T09:00:00Z
+ *         chiefComplaint:
+ *           type: string
+ *           example: Fever and cough for 3 days
+ *         diagnosis:
+ *           type: string
+ *           example: Upper respiratory infection
+ *           nullable: true
+ *         treatment:
+ *           type: string
+ *           example: Rest, fluids, acetaminophen
+ *           nullable: true
+ *         notes:
+ *           type: string
+ *           example: Patient advised to return if symptoms worsen
+ *           nullable: true
+ *         followUpRecommended:
+ *           type: boolean
+ *           example: true
+ *         followUpDate:
+ *           type: string
+ *           format: date
+ *           example: 2023-12-15
+ *           nullable: true
+ *         vitals:
+ *           type: string
+ *           example: '{"temperature":"38.5°C","heartRate":"85 bpm","bloodPressure":"120/80 mmHg"}'
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     LoginRequest:
+ *       type: object
+ *       required: [email, password]
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: admin@healthcare.com
+ *         password:
+ *           type: string
+ *           format: password
+ *           example: admin123
+ *
+ *     RegisterRequest:
+ *       type: object
+ *       required: [firstName, lastName, email, password, role]
+ *       properties:
+ *         firstName:
+ *           type: string
+ *           example: John
+ *         lastName:
+ *           type: string
+ *           example: Doe
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: john.doe@example.com
+ *         password:
+ *           type: string
+ *           format: password
+ *           example: Password123
+ *         role:
+ *           type: string
+ *           enum: [admin, doctor, nurse, receptionist, patient]
+ *           example: doctor
+ *         username:
+ *           type: string
+ *           example: johndoe
+ *         staffId:
+ *           type: string
+ *           example: STAFF-123
+ *
+ *     Pagination:
+ *       type: object
+ *       properties:
+ *         total:
+ *           type: integer
+ *           example: 100
+ *         page:
+ *           type: integer
+ *           example: 1
+ *         limit:
+ *           type: integer
+ *           example: 10
+ *         totalPages:
+ *           type: integer
+ *           example: 10
+ *
+ *   responses:
+ *     Unauthorized:
+ *       description: Authentication failed or token missing/invalid
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               message:
+ *                 type: string
+ *                 example: Unauthorized - Invalid token
+ *
+ *     Forbidden:
+ *       description: User doesn't have sufficient permissions
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               message:
+ *                 type: string
+ *                 example: Forbidden - Insufficient permissions
+ *
+ *     NotFound:
+ *       description: Resource not found
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               message:
+ *                 type: string
+ *                 example: Resource not found
+ *
+ *     BadRequest:
+ *       description: Bad request due to validation errors
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               message:
+ *                 type: string
+ *                 example: Validation failed
+ *               errors:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     field:
+ *                       type: string
+ *                     message:
+ *                       type: string
+ *
+ *     ServerError:
+ *       description: Internal server error
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               message:
+ *                 type: string
+ *                 example: Internal server error
+ *
+ * securitySchemes:
+ *   bearerAuth:
+ *     type: http
+ *     scheme: bearer
+ *     bearerFormat: JWT
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Authentication
+ *     description: User authentication endpoints
+ *   - name: Appointments
+ *     description: Appointment management endpoints
+ *   - name: Patients
+ *     description: Patient management endpoints
+ *   - name: Staff
+ *     description: Staff management endpoints
+ *   - name: Medical Records
+ *     description: Medical records management endpoints
+ */
+
+/**
+ * Authentication Controller
+ */
+
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login to the system
+ *     description: Authenticate with email and password to get an access token
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Login successful
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *                     token:
+ *                       type: string
+ *                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *       400:
+ *         description: Missing email or password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Email and password are required
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Invalid credentials
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     description: Create a new user account
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegisterRequest'
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Registration successful
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *                     token:
+ *                       type: string
+ *                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *       400:
+ *         description: Invalid input or user already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: User with this email already exists
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Get current user
+ *     description: Get currently logged in user information
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: User retrieved successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout
+ *     description: Logout from the system
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Logged out successfully
+ */
+
+/**
+ * @swagger
+ * /auth/password-reset-request:
+ *   post:
+ *     summary: Request password reset
+ *     description: Request a password reset email
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       200:
+ *         description: Reset email sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: If your email exists in our system, a reset link has been sent
+ *       400:
+ *         description: Email is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Email is required
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /auth/password-reset:
+ *   post:
+ *     summary: Reset password
+ *     description: Reset password with token
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, newPassword]
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: NewPassword123
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Password has been reset successfully
+ *       400:
+ *         description: Invalid or missing token/password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Token and new password are required
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * Appointment Controller
+ */
+
+/**
+ * @swagger
+ * /appointments:
+ *   get:
+ *     summary: Get all appointments
+ *     tags: [Appointments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter appointments from this date (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter appointments until this date (YYYY-MM-DD)
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [scheduled, completed, cancelled, no-show]
+ *         description: Filter by appointment status
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of appointments retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Appointment'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /appointments:
+ *   post:
+ *     summary: Create a new appointment
+ *     description: Create a new appointment between a patient and doctor
+ *     tags: [Appointments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AppointmentCreate'
+ *     responses:
+ *       201:
+ *         description: Appointment created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Appointment created successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/Appointment'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /appointments/{id}:
+ *   get:
+ *     summary: Get appointment by ID
+ *     tags: [Appointments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Appointment ID
+ *     responses:
+ *       200:
+ *         description: Appointment details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Appointment'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+
+/**
+ * @swagger
+ * /appointments/{id}:
+ *   put:
+ *     summary: Update an appointment
+ *     description: Update an existing appointment's details
+ *     tags: [Appointments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Appointment ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               startTime:
+ *                 type: string
+ *                 format: date-time
+ *               endTime:
+ *                 type: string
+ *                 format: date-time
+ *               status:
+ *                 type: string
+ *                 enum: [scheduled, completed, cancelled, no-show]
+ *               notes:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Appointment updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Appointment updated successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/Appointment'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /appointments/{id}:
+ *   delete:
+ *     summary: Delete an appointment
+ *     description: Delete an existing appointment
+ *     tags: [Appointments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Appointment ID
+ *     responses:
+ *       200:
+ *         description: Appointment deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Appointment deleted successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /appointments/patient/{patientId}:
+ *   get:
+ *     summary: Get appointments by patient ID
+ *     description: Retrieve all appointments for a specific patient
+ *     tags: [Appointments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: patientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Patient's appointments retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Appointment'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+
+/**
+ * @swagger
+ * /appointments/doctor/{doctorId}:
+ *   get:
+ *     summary: Get appointments by doctor ID
+ *     description: Retrieve all appointments for a specific doctor
+ *     tags: [Appointments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: doctorId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Doctor ID
+ *     responses:
+ *       200:
+ *         description: Doctor's appointments retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Doctor appointments retrieved successfully
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Appointment'
+ *       400:
+ *         description: Invalid doctor ID
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /appointments/stats:
+ *   get:
+ *     summary: Get appointment statistics
+ *     description: Retrieve statistics about appointments including counts by status
+ *     tags: [Appointments]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Appointment statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/AppointmentStats'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * Patient Controller
+ */
+
+/**
+ * @swagger
+ * /patients:
+ *   get:
+ *     summary: Get all patients
+ *     description: Retrieve a list of all patients with optional pagination
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term for filtering patients by name, email, etc.
+ *     responses:
+ *       200:
+ *         description: List of patients retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Patient'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /patients/{id}:
+ *   get:
+ *     summary: Get patient by ID
+ *     description: Retrieve detailed information for a specific patient
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Patient details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Patient'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /patients:
+ *   post:
+ *     summary: Create a new patient
+ *     description: Add a new patient to the system
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [firstName, lastName, dateOfBirth, gender]
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 example: Jane
+ *               lastName:
+ *                 type: string
+ *                 example: Smith
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *                 example: 1985-06-15
+ *               gender:
+ *                 type: string
+ *                 enum: [male, female, other]
+ *                 example: female
+ *               contactNumber:
+ *                 type: string
+ *                 example: 555-123-4567
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: jane.smith@example.com
+ *               address:
+ *                 type: string
+ *                 example: 123 Main St, Anytown, CA 12345
+ *               emergencyContactName:
+ *                 type: string
+ *                 example: John Smith
+ *               emergencyContactNumber:
+ *                 type: string
+ *                 example: 555-987-6543
+ *               bloodType:
+ *                 type: string
+ *                 example: A+
+ *               allergies:
+ *                 type: string
+ *                 example: Penicillin, Peanuts
+ *               medicalHistory:
+ *                 type: string
+ *                 example: Prior heart surgery, Asthma
+ *     responses:
+ *       201:
+ *         description: Patient created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Patient created successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/Patient'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * Staff Controller
+ */
+
+/**
+ * @swagger
+ * /staff:
+ *   get:
+ *     summary: Get all staff
+ *     description: Retrieve a list of all staff members with optional pagination
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *           enum: [doctor, nurse, admin, receptionist, pharmacist]
+ *         description: Filter staff by role
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term for filtering staff by name, email, etc.
+ *     responses:
+ *       200:
+ *         description: List of staff retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Staff'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * Medical Record Controller
+ */
+
+/**
+ * @swagger
+ * /medical-records:
+ *   get:
+ *     summary: Get all medical records
+ *     description: Retrieve a list of all medical records with optional pagination
+ *     tags: [Medical Records]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: patientId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter records by patient ID
+ *     responses:
+ *       200:
+ *         description: List of medical records retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/MedicalRecord'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /medical-records/{id}:
+ *   get:
+ *     summary: Get medical record by ID
+ *     description: Retrieve detailed information for a specific medical record
+ *     tags: [Medical Records]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Medical Record ID
+ *     responses:
+ *       200:
+ *         description: Medical record details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/MedicalRecord'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /medical-records/{id}/update:
+ *   put:
+ *     summary: Update a medical record
+ *     description: Update an existing medical record with new information
+ *     tags: [Medical Records]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Medical Record ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               chiefComplaint:
+ *                 type: string
+ *                 example: Persistent cough and fever for 5 days
+ *               diagnosis:
+ *                 type: string
+ *                 example: Acute bronchitis
+ *               treatment:
+ *                 type: string
+ *                 example: Prescribed antibiotics and rest
+ *               notes:
+ *                 type: string
+ *                 example: Patient should avoid strenuous activity
+ *               followUpRecommended:
+ *                 type: boolean
+ *                 example: true
+ *               followUpDate:
+ *                 type: string
+ *                 format: date
+ *                 example: 2023-12-15
+ *               vitals:
+ *                 type: string
+ *                 example: '{"temperature":"38.2°C","heartRate":"88 bpm","bloodPressure":"122/80 mmHg"}'
+ *     responses:
+ *       200:
+ *         description: Medical record updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Medical record updated successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/MedicalRecord'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /medical-records/create:
+ *   post:
+ *     summary: Create a new medical record
+ *     description: Create a new medical record for a patient
+ *     tags: [Medical Records]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [patientId, doctorId, visitDate, chiefComplaint]
+ *             properties:
+ *               patientId:
+ *                 type: number
+ *                 example: 5
+ *               doctorId:
+ *                 type: string
+ *                 example: STAFF-001
+ *               appointmentId:
+ *                 type: number
+ *                 example: 1
+ *                 nullable: true
+ *               visitDate:
+ *                 type: string
+ *                 format: date-time
+ *                 example: 2023-12-01T09:00:00Z
+ *               chiefComplaint:
+ *                 type: string
+ *                 example: Fever and cough for 3 days
+ *               diagnosis:
+ *                 type: string
+ *                 example: Upper respiratory infection
+ *               treatment:
+ *                 type: string
+ *                 example: Rest, fluids, acetaminophen
+ *               notes:
+ *                 type: string
+ *                 example: Patient advised to return if symptoms worsen
+ *               followUpRecommended:
+ *                 type: boolean
+ *                 example: true
+ *               followUpDate:
+ *                 type: string
+ *                 format: date
+ *                 example: 2023-12-15
+ *               vitals:
+ *                 type: string
+ *                 example: '{"temperature":"38.5°C","heartRate":"85 bpm","bloodPressure":"120/80 mmHg"}'
+ *     responses:
+ *       201:
+ *         description: Medical record created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Medical record created successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/MedicalRecord'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /medical-records/patient/{patientId}/history:
+ *   get:
+ *     summary: Get patient medical history
+ *     description: Retrieve complete medical history for a specific patient
+ *     tags: [Medical Records]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: patientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Patient medical history retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     medicalRecords:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/MedicalRecord'
+ *                     diagnoses:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: number
+ *                             example: 1
+ *                           diagnosisCode:
+ *                             type: string
+ *                             example: J20.9
+ *                           description:
+ *                             type: string
+ *                             example: Acute bronchitis, unspecified
+ *                           diagnosisDate:
+ *                             type: string
+ *                             format: date
+ *                             example: 2023-10-15
+ *                     medications:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: number
+ *                             example: 1
+ *                           name:
+ *                             type: string
+ *                             example: Amoxicillin
+ *                           dosage:
+ *                             type: string
+ *                             example: 500mg
+ *                           frequency:
+ *                             type: string
+ *                             example: 3 times daily
+ *                           startDate:
+ *                             type: string
+ *                             format: date
+ *                             example: 2023-10-15
+ *                           endDate:
+ *                             type: string
+ *                             format: date
+ *                             example: 2023-10-25
+ *                     allergies:
+ *                       type: string
+ *                       example: Penicillin, Peanuts
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /staff/{id}:
+ *   get:
+ *     summary: Get staff member by ID
+ *     description: Retrieve detailed information for a specific staff member
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Staff ID
+ *     responses:
+ *       200:
+ *         description: Staff details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Staff'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /staff/{id}:
+ *   put:
+ *     summary: Update staff member
+ *     description: Update information for a specific staff member
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Staff ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 example: John
+ *               lastName:
+ *                 type: string
+ *                 example: Doe
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.doe@hospital.com
+ *               contactNumber:
+ *                 type: string
+ *                 example: 555-987-6543
+ *               role:
+ *                 type: string
+ *                 enum: [doctor, nurse, admin, receptionist, pharmacist]
+ *                 example: doctor
+ *               specialization:
+ *                 type: string
+ *                 example: Cardiology
+ *               department:
+ *                 type: string
+ *                 example: Medical
+ *               status:
+ *                 type: string
+ *                 enum: [active, on-leave, inactive]
+ *                 example: active
+ *     responses:
+ *       200:
+ *         description: Staff member updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Staff member updated successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/Staff'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /staff:
+ *   post:
+ *     summary: Create a new staff member
+ *     description: Add a new staff member to the system
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [firstName, lastName, email, role]
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 example: John
+ *               lastName:
+ *                 type: string
+ *                 example: Doe
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.doe@hospital.com
+ *               contactNumber:
+ *                 type: string
+ *                 example: 555-987-6543
+ *               role:
+ *                 type: string
+ *                 enum: [doctor, nurse, admin, receptionist, pharmacist]
+ *                 example: doctor
+ *               specialization:
+ *                 type: string
+ *                 example: Cardiology
+ *               department:
+ *                 type: string
+ *                 example: Medical
+ *               joinDate:
+ *                 type: string
+ *                 format: date
+ *                 example: 2023-01-15
+ *               status:
+ *                 type: string
+ *                 enum: [active, on-leave, inactive]
+ *                 example: active
+ *     responses:
+ *       201:
+ *         description: Staff member created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Staff member created successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/Staff'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /patients/{id}:
+ *   put:
+ *     summary: Update a patient
+ *     description: Update an existing patient's information
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Patient ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 example: Jane
+ *               lastName:
+ *                 type: string
+ *                 example: Smith
+ *               contactNumber:
+ *                 type: string
+ *                 example: 555-123-4567
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: jane.smith@example.com
+ *               address:
+ *                 type: string
+ *                 example: 123 Main St, Anytown, CA 12345
+ *               emergencyContactName:
+ *                 type: string
+ *                 example: John Smith
+ *               emergencyContactNumber:
+ *                 type: string
+ *                 example: 555-987-6543
+ *               allergies:
+ *                 type: string
+ *                 example: Penicillin, Peanuts
+ *               medicalHistory:
+ *                 type: string
+ *                 example: Prior heart surgery, Asthma
+ *     responses:
+ *       200:
+ *         description: Patient updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Patient updated successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/Patient'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /patients/{id}:
+ *   delete:
+ *     summary: Delete a patient
+ *     description: Mark a patient as deleted (soft delete)
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Patient deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Patient deleted successfully
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /billing:
+ *   get:
+ *     summary: Get all billing records
+ *     description: Retrieve a list of all billing records with optional pagination
+ *     tags: [Billing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: patientId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by patient ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [paid, pending, overdue]
+ *         description: Filter by payment status
+ *     responses:
+ *       200:
+ *         description: List of billing records retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/BillingRecord'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     BillingRecord:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: INV-123456
+ *         patientId:
+ *           type: number
+ *           example: 5
+ *         appointmentId:
+ *           type: number
+ *           example: 10
+ *           nullable: true
+ *         invoiceDate:
+ *           type: string
+ *           format: date-time
+ *           example: 2023-10-15T10:30:00Z
+ *         dueDate:
+ *           type: string
+ *           format: date
+ *           example: 2023-11-15
+ *         amount:
+ *           type: number
+ *           format: float
+ *           example: 150.00
+ *         status:
+ *           type: string
+ *           enum: [paid, pending, overdue]
+ *           example: pending
+ *         items:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               description:
+ *                 type: string
+ *                 example: Office Visit - New Patient
+ *               code:
+ *                 type: string
+ *                 example: 99201
+ *               amount:
+ *                 type: number
+ *                 format: float
+ *                 example: 85.00
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     PaymentRecord:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: PMT-789012
+ *         invoiceId:
+ *           type: string
+ *           example: INV-123456
+ *         patientId:
+ *           type: number
+ *           example: 5
+ *         amount:
+ *           type: number
+ *           format: float
+ *           example: 150.00
+ *         paymentDate:
+ *           type: string
+ *           format: date-time
+ *           example: 2023-10-20T14:30:00Z
+ *         paymentMethod:
+ *           type: string
+ *           enum: [Credit Card, Cash, Insurance, Bank Transfer]
+ *           example: Credit Card
+ *         transactionId:
+ *           type: string
+ *           example: TXN-456789
+ *         status:
+ *           type: string
+ *           enum: [completed, pending, failed]
+ *           example: completed
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     Notification:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: number
+ *           example: 1
+ *         userId:
+ *           type: number
+ *           example: 5
+ *         type:
+ *           type: string
+ *           enum: [appointment, system, billing, message]
+ *           example: appointment
+ *         title:
+ *           type: string
+ *           example: Upcoming Appointment
+ *         content:
+ *           type: string
+ *           example: You have an appointment scheduled for tomorrow at 10:00 AM
+ *         isRead:
+ *           type: boolean
+ *           example: false
+ *         readAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Billing
+ *     description: Billing and payment management endpoints
+ *   - name: Notifications
+ *     description: User notification endpoints
+ */
+
+/**
+ * @swagger
+ * /billing/{id}:
+ *   get:
+ *     summary: Get billing record by ID
+ *     description: Retrieve details for a specific billing record
+ *     tags: [Billing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Billing record ID (invoice number)
+ *     responses:
+ *       200:
+ *         description: Billing record retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/BillingRecord'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /billing/{id}/payment:
+ *   post:
+ *     summary: Record a payment for a billing record
+ *     description: Process and record a payment for an existing billing record
+ *     tags: [Billing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Billing record ID (invoice number)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [amount, paymentMethod]
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 format: float
+ *                 example: 150.00
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [Credit Card, Cash, Insurance, Bank Transfer]
+ *                 example: Credit Card
+ *               transactionId:
+ *                 type: string
+ *                 example: TXN-456789
+ *               notes:
+ *                 type: string
+ *                 example: Payment for initial consultation
+ *     responses:
+ *       200:
+ *         description: Payment recorded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Payment recorded successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/PaymentRecord'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /notifications:
+ *   get:
+ *     summary: Get user notifications
+ *     description: Retrieve notifications for the current authenticated user
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: unreadOnly
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Only fetch unread notifications
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Maximum number of notifications to return
+ *     responses:
+ *       200:
+ *         description: Notifications retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Notification'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /notifications/{id}/read:
+ *   post:
+ *     summary: Mark notification as read
+ *     description: Mark a specific notification as read
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           format: int64
+ *         description: Notification ID
+ *     responses:
+ *       200:
+ *         description: Notification marked as read
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Notification marked as read
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * @swagger
+ * /notifications/read-all:
+ *   post:
+ *     summary: Mark all notifications as read
+ *     description: Mark all of the current user's notifications as read
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: All notifications marked as read
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: All notifications marked as read
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     count:
+ *                       type: integer
+ *                       example: 5
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+
+/**
+ * This file is just to document the API with Swagger comments
+ * It doesn't contain any actual code.
+ */
+export {};
