@@ -21,7 +21,6 @@ const refreshMode = args.includes("--refresh");
         logger.error("Database refresh failed:", error);
         process.exit(1);
       }
-      return;
     }
 
     // Normal mode - migrations and seeds separately

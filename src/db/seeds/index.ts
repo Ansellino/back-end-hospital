@@ -116,6 +116,7 @@ export const clearDatabase = (): void => {
 export const runAllSeeds = async (): Promise<void> => {
   try {
     // Run all seeders in sequence
+    await clearDatabase();
     try {
       await seedUsers();
       logger.info("Users seeded successfully");

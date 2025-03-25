@@ -10,8 +10,8 @@
     "lint": "eslint . --ext .ts",
     "test": "jest",
     "docs": "ts-node src/scripts/generate-docs.ts",
-    "db:setup": "ts-node src/scripts/setup-db.ts",
-    "db:migrate": "ts-node src/scripts/setup-db.ts --skip-seeds",
+    "db": "ts-node src/scripts/setup-db.ts",
+    "db:migrate": "ts-node src/scripts/setup-db.ts --migrate",
     "db:seed": "ts-node src/scripts/setup-db.ts --skip-migrations",
     "db:clear": "ts-node src/scripts/setup-db.ts --force-clear",
     "db:refresh": "ts-node src/scripts/setup-db.ts --refresh"
