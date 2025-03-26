@@ -1,6 +1,12 @@
 import db from "../../config/database";
 import { logger } from "../../utils/logger";
 
+interface MedicalRecord {
+  id: number;
+  patientId: number;
+  doctorId: string;
+}
+
 export const seed = async () => {
   try {
     const now = new Date().toISOString();
@@ -9,9 +15,7 @@ export const seed = async () => {
     // Check if medications table exists
     const tableExists = db
       .prepare(
-        `
-      SELECT name FROM sqlite_master WHERE type='table' AND name='medications'
-    `
+        `SELECT name FROM sqlite_master WHERE type='table' AND name='medications'`
       )
       .get();
 
@@ -24,12 +28,8 @@ export const seed = async () => {
 
     // Get medical records to link medications
     const medicalRecords = db
-      .prepare(
-        `
-      SELECT id, patientId, doctorId FROM medical_records
-    `
-      )
-      .all() as { id: number; patientId: number; doctorId: string }[];
+      .prepare(`SELECT id, patientId, doctorId FROM medical_records`)
+      .all() as MedicalRecord[];
 
     if (medicalRecords.length === 0) {
       logger.warn("No medical records found, skipping medications seeding");
@@ -77,41 +77,36 @@ export const seed = async () => {
       },
     ];
 
-    // Create medications for medical records (70% of records)
+    // Create medications for approximately 70% of medical records
     for (const record of medicalRecords) {
       if (Math.random() < 0.7) {
         // Random medication
         const medication =
           medications[Math.floor(Math.random() * medications.length)];
 
-        // Medication start/end dates
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - Math.floor(Math.random() * 30)); // 0-30 days ago
-
-        const endDate = new Date(startDate);
-        endDate.setDate(
-          endDate.getDate() + Math.floor(Math.random() * 90) + 30
-        ); // 30-120 days after start
+        // Generate duration, quantity and refills
+        const duration = `${Math.floor(Math.random() * 30) + 7} days`;
+        const quantity = Math.floor(Math.random() * 90) + 30; // 30-120 units
+        const refills = Math.floor(Math.random() * 3); // 0-2 refills
 
         try {
           db.prepare(
             `
-            INSERT INTO medications (patientId, medicalRecordId, doctorId, name, dosage, frequency, startDate, endDate, instructions, status, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO medications (
+              medicalRecordId, medicationId, name, dosage, 
+              frequency, duration, quantity, refills, instructions
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `
           ).run(
-            record.patientId,
             record.id,
-            record.doctorId,
+            `med-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
             medication.name,
             medication.dosage,
             medication.frequency,
-            startDate.toISOString(),
-            endDate.toISOString(),
-            "Take as directed. Contact doctor if side effects occur.",
-            Math.random() < 0.8 ? "active" : "discontinued",
-            now,
-            now
+            duration,
+            quantity,
+            refills,
+            "Take as directed. Contact doctor if side effects occur."
           );
         } catch (error) {
           logger.error(

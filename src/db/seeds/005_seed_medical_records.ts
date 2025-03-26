@@ -6,19 +6,19 @@ interface AppointmentRecord {
   patientId: number;
   doctorId: string;
   status: string;
+  startTime: string;
 }
 
 export const seed = async () => {
   try {
     const now = new Date().toISOString();
+    const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days in future
     logger.info("Seeding medical records...");
 
     // Check if medical_records table exists
     const tableExists = db
       .prepare(
-        `
-      SELECT name FROM sqlite_master WHERE type='table' AND name='medical_records'
-    `
+        `SELECT name FROM sqlite_master WHERE type='table' AND name='medical_records'`
       )
       .get();
 
@@ -29,20 +29,18 @@ export const seed = async () => {
       return;
     }
 
-    // Get completed appointments to link medical records
+    // Get appointments to link medical records
     const appointments = db
       .prepare(
         `
-      SELECT id, patientId, doctorId, status FROM appointments
-      WHERE status = 'completed' OR status = 'scheduled'
-    `
+        SELECT id, patientId, doctorId, status, startTime FROM appointments
+        WHERE status = 'completed' OR status = 'scheduled'
+      `
       )
       .all() as AppointmentRecord[];
 
     if (appointments.length === 0) {
-      logger.warn(
-        "No completed appointments found, skipping medical records seeding"
-      );
+      logger.warn("No appointments found, skipping medical records seeding");
       return;
     }
 
@@ -72,23 +70,18 @@ export const seed = async () => {
       "Pain management protocol",
     ];
 
-    // Create medical records for completed appointments
+    // Create medical records for appointments
     for (const appointment of appointments) {
-      if (appointment.status === "completed") {
+      try {
         // Generate random vitals
-        const temperature = (Math.random() * 3 + 97).toFixed(1); // 97-100
-        const heartRate = Math.floor(Math.random() * 40 + 60); // 60-100
-        const respiratoryRate = Math.floor(Math.random() * 8 + 12); // 12-20
-        const bloodPressureSystolic = Math.floor(Math.random() * 40 + 110); // 110-150
-        const bloodPressureDiastolic = Math.floor(Math.random() * 25 + 60); // 60-85
-
-        const vitals = JSON.stringify({
-          temperature: `${temperature}°F`,
-          heartRate: `${heartRate} bpm`,
-          respiratoryRate: `${respiratoryRate} breaths/min`,
-          bloodPressure: `${bloodPressureSystolic}/${bloodPressureDiastolic} mmHg`,
-          oxygenSaturation: `${Math.floor(Math.random() * 4 + 96)}%`, // 96-99%
-        });
+        const temperature = (Math.random() * 1.5 + 36.2).toFixed(1); // 36.2-37.7°C
+        const heartRate = Math.floor(Math.random() * 40 + 60); // 60-100 bpm
+        const respiratoryRate = Math.floor(Math.random() * 8 + 12); // 12-20 breaths/min
+        const bloodPressureSystolic = Math.floor(Math.random() * 40 + 110); // 110-150 mmHg
+        const bloodPressureDiastolic = Math.floor(Math.random() * 20 + 70); // 70-90 mmHg
+        const oxygenSaturation = (Math.random() * 4 + 96).toFixed(1); // 96-100%
+        const height = (Math.random() * 0.5 + 1.5).toFixed(2); // 1.50-2.00m
+        const weight = (Math.random() * 50 + 50).toFixed(1); // 50-100kg
 
         // Get random diagnosis and treatment
         const diagnosis =
@@ -96,102 +89,84 @@ export const seed = async () => {
         const treatment =
           treatments[Math.floor(Math.random() * treatments.length)];
 
-        try {
-          db.prepare(
+        // 1. First insert the medical record
+        const medicalRecordInfo = db
+          .prepare(
             `
-            INSERT INTO medical_records (patientId, doctorId, appointmentId, diagnosis, treatment, notes, vitals, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `
-          ).run(
+          INSERT INTO medical_records (
+            patientId, doctorId, visitDate, visitId, chiefComplaint, 
+            notes, followUpRecommended, followUpDate, createdAt, updatedAt
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+          )
+          .run(
             appointment.patientId,
             appointment.doctorId,
-            appointment.id,
-            diagnosis,
-            treatment,
-            `Patient visit for ${diagnosis}. Treatment plan established.`,
-            vitals,
+            appointment.startTime,
+            `VISIT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            `Patient reported ${diagnosis} symptoms`,
+            `${treatment}. Patient advised to follow instructions.`,
+            Math.random() > 0.5 ? 1 : 0, // 50% follow-up chance
+            Math.random() > 0.5 ? futureDate.toISOString() : null,
             now,
             now
           );
-        } catch (error) {
-          logger.error(
-            `Error inserting medical record for appointment ${appointment.id}:`,
-            error
-          );
 
-          // Try alternative schema in case the structure is different
-          try {
-            db.prepare(
-              `
-              INSERT INTO medical_records (patientId, doctorId, visitDate, chiefComplaint, diagnosis, notes, createdAt, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `
-            ).run(
-              appointment.patientId,
-              appointment.doctorId,
-              now,
-              diagnosis,
-              diagnosis,
-              `Patient visit for ${diagnosis}. ${treatment}`,
-              now,
-              now
-            );
-            logger.info("Used alternative schema for medical record insertion");
-          } catch (altError) {
-            logger.error("Alternative insert also failed:", altError);
-          }
-        }
+        const medicalRecordId = medicalRecordInfo.lastInsertRowid as number;
 
-        // Create vital signs records
-        try {
-          db.prepare(
-            `
-            INSERT INTO vital_signs (patientId, appointmentId, temperature, heartRate, bloodPressure, respiratoryRate, oxygenSaturation, recordedAt, notes, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        // 2. Insert vital signs linked to the medical record
+        db.prepare(
           `
-          ).run(
-            appointment.patientId,
-            appointment.id,
-            `${temperature}°F`,
-            `${heartRate} bpm`,
-            `${bloodPressureSystolic}/${bloodPressureDiastolic} mmHg`,
-            `${respiratoryRate} breaths/min`,
-            `${Math.floor(Math.random() * 4 + 96)}%`,
-            now,
-            "Recorded during regular checkup",
-            now,
-            now
-          );
-        } catch (error) {
-          logger.error(
-            `Error inserting vital signs for appointment ${appointment.id}:`,
-            error
-          );
-        }
+          INSERT INTO vital_signs (
+            medicalRecordId, temperature, bloodPressureSystolic,
+            bloodPressureDiastolic, heartRate, respiratoryRate,
+            oxygenSaturation, height, weight
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+        ).run(
+          medicalRecordId,
+          temperature,
+          bloodPressureSystolic,
+          bloodPressureDiastolic,
+          heartRate,
+          respiratoryRate,
+          oxygenSaturation,
+          height,
+          weight
+        );
 
-        // Create diagnoses records
-        try {
-          db.prepare(
-            `
-            INSERT INTO diagnoses (patientId, appointmentId, doctorId, diagnosisCode, description, diagnosisDate, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        // 3. Insert diagnosis linked to the medical record
+        db.prepare(
           `
-          ).run(
-            appointment.patientId,
-            appointment.id,
-            appointment.doctorId,
-            `ICD-${Math.floor(Math.random() * 90) + 10}`,
-            diagnosis,
-            now,
-            now,
-            now
-          );
-        } catch (error) {
-          logger.error(
-            `Error inserting diagnosis for appointment ${appointment.id}:`,
-            error
-          );
-        }
+          INSERT INTO diagnoses (
+            medicalRecordId, code, description, type, notes
+          )
+          VALUES (?, ?, ?, ?, ?)
+        `
+        ).run(
+          medicalRecordId,
+          `ICD-${Math.floor(Math.random() * 90) + 10}`,
+          diagnosis,
+          Math.random() > 0.5 ? "primary" : "secondary",
+          `Notes regarding ${diagnosis}`
+        );
+
+        // 4. Insert treatment instructions
+        db.prepare(
+          `
+          INSERT INTO treatment_instructions (
+            medicalRecordId, instructions
+          )
+          VALUES (?, ?)
+        `
+        ).run(medicalRecordId, treatment);
+      } catch (error) {
+        logger.error(
+          `Error inserting medical record for appointment ${appointment.id}:`,
+          error
+        );
       }
     }
 

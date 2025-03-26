@@ -1,7 +1,7 @@
 import db from "../../config/database";
 import { logger } from "../../utils/logger";
 
-interface UserRecord {
+interface User {
   id: number;
   role: string;
 }
@@ -14,9 +14,7 @@ export const seed = async () => {
     // Check if notifications table exists
     const tableExists = db
       .prepare(
-        `
-      SELECT name FROM sqlite_master WHERE type='table' AND name='notifications'
-    `
+        `SELECT name FROM sqlite_master WHERE type='table' AND name='notifications'`
       )
       .get();
 
@@ -27,35 +25,39 @@ export const seed = async () => {
       return;
     }
 
-    // Get users to send notifications to
-    const users = db
-      .prepare(
-        `
-      SELECT id, role FROM users
-    `
-      )
-      .all() as UserRecord[];
+    // Get users
+    const users = db.prepare(`SELECT id, role FROM users`).all() as User[];
 
     if (users.length === 0) {
       logger.warn("No users found, skipping notifications seeding");
       return;
     }
 
-    const notificationTypes = [
+    const notifications = [
       {
         type: "appointment",
-        title: "Upcoming Appointment",
-        content: "You have an appointment scheduled for tomorrow.",
+        title: "Appointment Reminder",
+        content: "You have an upcoming appointment tomorrow at 10:00 AM.",
+      },
+      {
+        type: "appointment",
+        title: "Appointment Changed",
+        content: "Your appointment has been rescheduled to next week.",
+      },
+      {
+        type: "system",
+        title: "System Update",
+        content: "We've improved the patient portal with new features.",
+      },
+      {
+        type: "patient",
+        title: "Test Results Available",
+        content: "Your recent lab test results are now available for review.",
       },
       {
         type: "medical_record",
         title: "Medical Record Updated",
         content: "Your medical record has been updated with new information.",
-      },
-      {
-        type: "prescription",
-        title: "New Prescription",
-        content: "A new prescription has been added to your records.",
       },
       {
         type: "billing",
@@ -81,42 +83,49 @@ export const seed = async () => {
       const notificationCount = Math.floor(Math.random() * 4) + 1;
 
       for (let i = 0; i < notificationCount; i++) {
+        // Random notification
         const notification =
-          notificationTypes[
-            Math.floor(Math.random() * notificationTypes.length)
-          ];
+          notifications[Math.floor(Math.random() * notifications.length)];
 
-        // Random read status (70% chance of being read)
-        const isRead = Math.random() < 0.7;
-
-        // Random creation date (0-7 days ago)
+        // Random creation date within past 30 days
         const creationDate = new Date();
         creationDate.setDate(
-          creationDate.getDate() - Math.floor(Math.random() * 7)
+          creationDate.getDate() - Math.floor(Math.random() * 30)
         );
 
-        // Read date if read (after creation date)
+        // 70% chance of being read
+        const isRead = Math.random() < 0.7;
+
+        // If read, add read date between creation date and now
         let readDate = null;
         if (isRead) {
           readDate = new Date(creationDate);
           readDate.setHours(
-            readDate.getHours() + Math.floor(Math.random() * 10) + 1
+            readDate.getHours() + Math.floor(Math.random() * 48)
           );
+
+          // Make sure read date is not in the future
+          if (readDate > new Date()) {
+            readDate = new Date();
+          }
         }
 
         try {
+          // Insert notification with schema that matches your db structure
           db.prepare(
             `
-            INSERT INTO notifications (userId, type, title, content, isRead, readAt, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO notifications (
+              recipientId, title, message, type, isRead, relatedId, actionUrl, createdAt, updatedAt
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `
           ).run(
             user.id,
-            notification.type,
             notification.title,
             notification.content + ` (User role: ${user.role})`,
+            notification.type,
             isRead ? 1 : 0,
-            readDate ? readDate.toISOString() : null,
+            null, // relatedId
+            null, // actionUrl
             creationDate.toISOString(),
             now
           );
@@ -125,36 +134,6 @@ export const seed = async () => {
             `Error inserting notification for user ${user.id}:`,
             error
           );
-        }
-
-        // Also create notification preferences if that table exists
-        try {
-          const prefTableExists = db
-            .prepare(
-              `
-            SELECT name FROM sqlite_master WHERE type='table' AND name='notification_preferences'
-          `
-            )
-            .get();
-
-          if (prefTableExists) {
-            db.prepare(
-              `
-              INSERT INTO notification_preferences (userId, type, email, sms, inApp, createdAt, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?, ?)
-            `
-            ).run(
-              user.id,
-              notification.type,
-              Math.random() < 0.8 ? 1 : 0,
-              Math.random() < 0.5 ? 1 : 0,
-              1, // Always enable in-app
-              now,
-              now
-            );
-          }
-        } catch (prefError) {
-          // Ignore preference errors - might already exist
         }
       }
     }

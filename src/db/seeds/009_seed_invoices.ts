@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 interface AppointmentRecord {
   id: number;
   patientId: number;
+  doctorId: string;
+  startTime: string;
 }
 
 // Interface for the database row ID result
@@ -15,30 +17,17 @@ interface RowIdResult {
 export const seed = async () => {
   try {
     const now = new Date().toISOString();
-    logger.info("Seeding invoices and billing records...");
+    logger.info("Seeding invoices...");
 
     // Check if invoices table exists
     const invoicesTableExists = db
       .prepare(
-        `
-      SELECT name FROM sqlite_master WHERE type='table' AND name='invoices'
-    `
+        `SELECT name FROM sqlite_master WHERE type='table' AND name='invoices'`
       )
       .get();
 
-    // Check if billing table exists
-    const billingTableExists = db
-      .prepare(
-        `
-      SELECT name FROM sqlite_master WHERE type='table' AND name='billing'
-    `
-      )
-      .get();
-
-    if (!invoicesTableExists && !billingTableExists) {
-      logger.warn(
-        "Neither invoices nor billing table exists, skipping invoice seeding"
-      );
+    if (!invoicesTableExists) {
+      logger.warn("Invoices table doesn't exist, skipping invoice seeding");
       return;
     }
 
@@ -46,9 +35,9 @@ export const seed = async () => {
     const appointments = db
       .prepare(
         `
-      SELECT id, patientId FROM appointments
-      WHERE status = 'completed'
-    `
+        SELECT id, patientId, doctorId, startTime FROM appointments
+        WHERE status = 'completed'
+      `
       )
       .all() as AppointmentRecord[];
 
@@ -95,149 +84,103 @@ export const seed = async () => {
 
     // Create invoices for each completed appointment
     for (const appointment of appointments) {
-      // Generate invoice ID
-      const generatedInvoiceId = `INV-${
-        Math.floor(Math.random() * 900000) + 100000
-      }`;
+      try {
+        // Generate invoice ID using UUID for uniqueness
+        const invoiceId = `INV-${uuidv4().substring(0, 8)}`;
 
-      // Invoice date (slightly in the past)
-      const invoiceDate = new Date();
-      invoiceDate.setDate(
-        invoiceDate.getDate() - Math.floor(Math.random() * 30)
-      );
+        // Invoice date (slightly in the past)
+        const invoiceDate = new Date();
+        invoiceDate.setDate(
+          invoiceDate.getDate() - Math.floor(Math.random() * 30)
+        );
 
-      // Due date (30 days after invoice date)
-      const dueDate = new Date(invoiceDate);
-      dueDate.setDate(dueDate.getDate() + 30);
+        // Due date (30 days after invoice date)
+        const dueDate = new Date(invoiceDate);
+        dueDate.setDate(dueDate.getDate() + 30);
 
-      // Random number of items (1-3)
-      const itemCount = Math.floor(Math.random() * 3) + 1;
-      let totalAmount = 0;
-      const items = [];
+        // Random number of items (1-3)
+        const itemCount = Math.floor(Math.random() * 3) + 1;
+        let totalAmount = 0;
 
-      for (let i = 0; i < itemCount; i++) {
-        const item =
-          billingItems[Math.floor(Math.random() * billingItems.length)];
-        totalAmount += item.amount;
-        items.push(item);
-      }
-
-      // Random payment status
-      const status =
-        Math.random() < 0.7
-          ? "paid"
-          : Math.random() < 0.5
-          ? "pending"
-          : "overdue";
-
-      // Try inserting into invoices table if it exists
-      if (invoicesTableExists) {
-        try {
-          const invoiceResult = db
-            .prepare(
-              `
-            INSERT INTO invoices (invoiceNumber, patientId, appointmentId, issueDate, dueDate, totalAmount, status, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `
-            )
-            .run(
-              generatedInvoiceId,
-              appointment.patientId,
-              appointment.id,
-              invoiceDate.toISOString(),
-              dueDate.toISOString(),
-              totalAmount,
-              status,
-              now,
-              now
-            );
-
-          // Get the invoice ID and create invoice items
-          const rowIdResult = db
-            .prepare("SELECT last_insert_rowid() as id")
-            .get() as RowIdResult;
-
-          const dbInvoiceId = rowIdResult.id;
-
-          // Add invoice items
-          for (const item of items) {
-            db.prepare(
-              `
-              INSERT INTO invoice_items (invoiceId, description, code, amount, createdAt, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?)
-            `
-            ).run(
-              dbInvoiceId,
-              item.description,
-              item.code,
-              item.amount,
-              now,
-              now
-            );
-          }
-
-          // If paid, create a payment record
-          if (status === "paid") {
-            db.prepare(
-              `
-              INSERT INTO payments (invoiceId, patientId, amount, paymentDate, paymentMethod, transactionId, status, createdAt, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `
-            ).run(
-              dbInvoiceId,
-              appointment.patientId,
-              totalAmount,
-              new Date(
-                invoiceDate.getTime() +
-                  Math.random() * (dueDate.getTime() - invoiceDate.getTime())
-              ).toISOString(),
-              ["Credit Card", "Cash", "Insurance", "Bank Transfer"][
-                Math.floor(Math.random() * 4)
-              ],
-              `TXN-${Math.floor(Math.random() * 1000000)}`,
-              "completed",
-              now,
-              now
-            );
-          }
-        } catch (error) {
-          logger.error(
-            `Error inserting invoice for appointment ${appointment.id}:`,
-            error
-          );
+        // Select random items
+        const selectedItems = [];
+        for (let i = 0; i < itemCount; i++) {
+          const item =
+            billingItems[Math.floor(Math.random() * billingItems.length)];
+          totalAmount += item.amount;
+          selectedItems.push(item);
         }
-      }
 
-      // Try inserting into billing table if it exists
-      if (billingTableExists) {
-        try {
-          db.prepare(
-            `
-            INSERT INTO billing (invoiceId, patientId, appointmentId, invoiceDate, dueDate, amount, status, items, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `
-          ).run(
-            generatedInvoiceId,
-            appointment.patientId,
-            appointment.id,
-            invoiceDate.toISOString(),
-            dueDate.toISOString(),
-            totalAmount,
-            status,
-            JSON.stringify(items),
-            now,
-            now
-          );
-        } catch (error) {
-          logger.error(
-            `Error inserting billing record for appointment ${appointment.id}:`,
-            error
-          );
+        // Random payment status and amount paid based on status
+        let status,
+          amountPaid,
+          balance,
+          paidDate = null,
+          paymentMethod = null;
+        const randomValue = Math.random();
+
+        if (randomValue < 0.6) {
+          // 60% fully paid
+          status = "paid";
+          amountPaid = totalAmount;
+          balance = 0;
+          paidDate = new Date(
+            invoiceDate.getTime() +
+              Math.random() * (Date.now() - invoiceDate.getTime())
+          ).toISOString();
+          paymentMethod = ["cash", "credit_card", "insurance", "check"][
+            Math.floor(Math.random() * 4)
+          ];
+        } else if (randomValue < 0.8) {
+          // 20% partially paid
+          status = "partially_paid";
+          amountPaid =
+            Math.round(Math.random() * 0.8 * totalAmount * 100) / 100; // 0-80% paid
+          balance = totalAmount - amountPaid;
+        } else {
+          // 20% unpaid
+          status = Math.random() < 0.5 ? "sent" : "overdue";
+          amountPaid = 0;
+          balance = totalAmount;
         }
+
+        // Insert the invoice
+        db.prepare(
+          `
+          INSERT INTO invoices (
+            id, patientId, appointmentId, totalAmount, amountPaid, 
+            balance, status, dueDate, paidDate, paymentMethod, 
+            notes, createdAt, updatedAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+        ).run(
+          invoiceId,
+          appointment.patientId,
+          appointment.id,
+          totalAmount,
+          amountPaid,
+          balance,
+          status,
+          dueDate.toISOString(),
+          paidDate,
+          paymentMethod,
+          "Generated from appointment",
+          now,
+          now
+        );
+
+        logger.info(
+          `Created invoice ${invoiceId} for appointment ${appointment.id}`
+        );
+      } catch (error) {
+        logger.error(
+          `Error inserting invoice for appointment ${appointment.id}:`,
+          error
+        );
       }
     }
 
-    logger.info("Invoices and billing records seeded successfully");
+    logger.info("Invoices seeded successfully");
   } catch (error) {
     logger.error("Error in invoices seed:", error);
     throw error;

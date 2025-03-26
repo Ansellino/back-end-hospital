@@ -8,6 +8,13 @@ import { seed as seedPrescriptions } from "./007_seed_prescriptions";
 import { seed as seedProcedures } from "./008_seed_procedures";
 import { seed as seedInvoices } from "./009_seed_invoices";
 import { seed as seedNotifications } from "./010_seed_notifications";
+import { seed as seedVitalSigns } from "./011_seed_vital_signs";
+import { seed as seedTreatmentInstructions } from "./012_seed_treatment_instructions";
+import { seed as seedAttachments } from "./013_seed_attachments";
+import { seed as seedInvoiceItems } from "./014_seed_invoice_items";
+import { seed as seedPayments } from "./015_seed_payments";
+import { seed as seedNotificationPrefs } from "./016_seed_notification_prefs";
+import { seed as seedDiagnoses } from "./017_seed_diagnoses";
 import { logger } from "../../utils/logger";
 import db from "../../config/database";
 import {
@@ -133,6 +140,12 @@ export const runAllSeeds = async (): Promise<void> => {
       await seedMedicalRecords();
       logger.info("Medical records seeded successfully");
 
+      await seedVitalSigns();
+      logger.info("Vital signs seeded successfully");
+
+      await seedDiagnoses();
+      logger.info("Diagnoses seeded successfully");
+
       await seedMedications();
       logger.info("Medications seeded successfully");
 
@@ -142,11 +155,26 @@ export const runAllSeeds = async (): Promise<void> => {
       await seedProcedures();
       logger.info("Procedures seeded successfully");
 
+      await seedTreatmentInstructions();
+      logger.info("Treatment instructions seeded successfully");
+
+      await seedAttachments();
+      logger.info("Attachments seeded successfully");
+
       await seedInvoices();
       logger.info("Invoices seeded successfully");
 
+      await seedInvoiceItems();
+      logger.info("Invoice items seeded successfully");
+
+      await seedPayments();
+      logger.info("Payments seeded successfully");
+
       await seedNotifications();
       logger.info("Notifications seeded successfully");
+
+      await seedNotificationPrefs();
+      logger.info("Notification preferences seeded successfully");
     } catch (error) {
       logger.error("Error in seeding:", error);
       throw error;
