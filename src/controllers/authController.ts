@@ -17,7 +17,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
 
     const { email, password } = req.body;
-    console.log("Login attempt with:", email); // Add debug logging
+    console.log("Login attempt with:", email);
 
     // Validate request
     if (!email || !password) {
@@ -31,7 +31,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Find user by email
     const user = await UserModel.findOne({ email });
-    console.log("User found:", user ? "Yes" : "No"); // Debug logging
+    console.log("User found:", user ? "Yes" : "No");
 
     if (!user) {
       console.log("Invalid credentials - user not found");
@@ -44,7 +44,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Verify password
     const isPasswordValid = await bcryptjs.compare(password, user.password);
-    console.log("Password valid:", isPasswordValid); // Debug logging
+    console.log("Password valid:", isPasswordValid);
 
     if (!isPasswordValid) {
       console.log("Invalid credentials - password incorrect");
@@ -67,48 +67,51 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Use consistent ID field
     const userId = user.id || user._id;
-    console.log("Using userId:", userId); // Debug logging
+    console.log("Using userId:", userId);
 
-    // FIXED: Use "userId" instead of "id" in the token payload for consistency
+    // Generate JWT token
     const token = jwt.sign(
       {
-        userId: userId,
+        userId: userId, // Using userId consistently
         email: user.email,
         role: user.role,
       },
-      env.JWT_SECRET as jwt.Secret, // Add type assertion
+      env.JWT_SECRET,
       { expiresIn: "24h" }
     );
 
     console.log(
       "Token generated:",
       token ? "Yes (length: " + token.length + ")" : "No"
-    ); // Debug logging
+    );
 
-    // Prepare response object
+    // Create the response object with exact structure requested
     const responseData = {
       success: true,
+      message: "Login successful",
       data: {
         user: {
-          id: userId, // Use consistent ID
+          id: userId,
+          username: user.username || email.split("@")[0],
+          email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
-          email: user.email,
           role: user.role,
           permissions: user.permissions || [],
+          staffId: user.staffId || `STAFF-${userId}`,
+          createdAt: user.createdAt || new Date().toISOString(),
+          updatedAt: user.updatedAt || new Date().toISOString(),
         },
         token,
       },
-      message: "Login successful",
     };
 
-    // Log response before sending
-    console.log("Sending successful login response");
-
-    // Send response
+    // Log response and send it directly
+    console.log("Sending response...");
     res.status(200).json(responseData);
   } catch (error: unknown) {
     console.error("Login error:", error);
+
     res.status(500).json({
       success: false,
       message: "An error occurred during login",
