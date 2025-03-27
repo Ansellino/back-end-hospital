@@ -10,10 +10,18 @@ import { env } from "../config/env"; // Import env config
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Add additional request logging
+    console.log("Login request received:", {
+      body: req.body,
+      headers: req.headers["content-type"],
+    });
+
     const { email, password } = req.body;
+    console.log("Login attempt with:", email); // Add debug logging
 
     // Validate request
     if (!email || !password) {
+      console.log("Missing email or password");
       res.status(400).json({
         success: false,
         message: "Email and password are required",
@@ -23,7 +31,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Find user by email
     const user = await UserModel.findOne({ email });
+    console.log("User found:", user ? "Yes" : "No"); // Debug logging
+
     if (!user) {
+      console.log("Invalid credentials - user not found");
       res.status(401).json({
         success: false,
         message: "Invalid credentials",
@@ -33,7 +44,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Verify password
     const isPasswordValid = await bcryptjs.compare(password, user.password);
+    console.log("Password valid:", isPasswordValid); // Debug logging
+
     if (!isPasswordValid) {
+      console.log("Invalid credentials - password incorrect");
       res.status(401).json({
         success: false,
         message: "Invalid credentials",
@@ -41,23 +55,42 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Generate JWT token with env config
+    // Check JWT_SECRET is available
+    if (!env.JWT_SECRET) {
+      console.error("JWT_SECRET is not defined");
+      res.status(500).json({
+        success: false,
+        message: "Server configuration error",
+      });
+      return;
+    }
+
+    // Use consistent ID field
+    const userId = user.id || user._id;
+    console.log("Using userId:", userId); // Debug logging
+
+    // FIXED: Use "userId" instead of "id" in the token payload for consistency
     const token = jwt.sign(
       {
-        userId: user.id, // Change id to userId for consistency
+        userId: userId,
         email: user.email,
         role: user.role,
       },
-      env.JWT_SECRET,
-      { expiresIn: (env.JWT_EXPIRATION = "24h") }
+      env.JWT_SECRET as jwt.Secret, // Add type assertion
+      { expiresIn: "24h" }
     );
 
-    // Return user data and token
-    res.status(200).json({
+    console.log(
+      "Token generated:",
+      token ? "Yes (length: " + token.length + ")" : "No"
+    ); // Debug logging
+
+    // Prepare response object
+    const responseData = {
       success: true,
       data: {
         user: {
-          id: user._id,
+          id: userId, // Use consistent ID
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
@@ -67,12 +100,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         token,
       },
       message: "Login successful",
-    });
-  } catch (error) {
+    };
+
+    // Log response before sending
+    console.log("Sending successful login response");
+
+    // Send response
+    res.status(200).json(responseData);
+  } catch (error: unknown) {
     console.error("Login error:", error);
     res.status(500).json({
       success: false,
       message: "An error occurred during login",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error instanceof Error
+            ? error.message
+            : String(error)
+          : undefined,
     });
   }
 };
@@ -102,7 +147,7 @@ export const getCurrentUser = async (
       data: user,
       message: "User retrieved successfully",
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Get current user error:", error);
     res.status(500).json({
       success: false,
@@ -160,15 +205,25 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Generate JWT token
+    // FIXED: Check for JWT_SECRET and fix expiration syntax
+    if (!env.JWT_SECRET) {
+      console.error("JWT_SECRET is not defined");
+      res.status(500).json({
+        success: false,
+        message: "Server configuration error",
+      });
+      return;
+    }
+
+    // FIXED: Generate JWT token with consistent ID field
     const token = jwt.sign(
       {
-        id: user.id,
+        userId: user.id,
         email: user.email,
         role: user.role,
       },
-      env.JWT_SECRET,
-      { expiresIn: (env.JWT_EXPIRATION = "24h") }
+      env.JWT_SECRET as jwt.Secret,
+      { expiresIn: "24h" } // Fixed expiration
     );
 
     // Return user data and token
@@ -186,7 +241,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       },
       message: "Registration successful",
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Registration error:", error);
     res.status(500).json({
       success: false,
@@ -238,10 +293,26 @@ export const requestPasswordReset = async (
       return;
     }
 
-    // Generate reset token
+    // FIXED: Check for JWT_SECRET
+    if (!env.JWT_SECRET) {
+      console.error("JWT_SECRET is not defined");
+      res.status(500).json({
+        success: false,
+        message: "Server configuration error",
+      });
+      return;
+    }
+
+    // FIXED: Use consistent ID field (user._id to user.id if available)
+    const userId = user.id || user._id;
+
+    // Generate reset token with consistent field naming
     const resetToken = jwt.sign(
-      { id: user._id, email: user.email },
-      env.JWT_SECRET + user.password, // Add password hash to invalidate token when password changes
+      {
+        id: userId, // Keep using 'id' for password reset tokens
+        email: user.email,
+      },
+      env.JWT_SECRET + user.password,
       { expiresIn: "1h" }
     );
 
@@ -254,7 +325,7 @@ export const requestPasswordReset = async (
       // Remove in production:
       data: { resetToken },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Password reset request error:", error);
     res.status(500).json({
       success: false,
@@ -282,9 +353,29 @@ export const resetPassword = async (
       return;
     }
 
-    // Verify token
-    const decoded = jwt.verify(token, env.JWT_SECRET) as jwt.JwtPayload;
-    const user = await UserModel.findById(decoded.id);
+    // FIXED: Check for JWT_SECRET
+    if (!env.JWT_SECRET) {
+      console.error("JWT_SECRET is not defined");
+      res.status(500).json({
+        success: false,
+        message: "Server configuration error",
+      });
+      return;
+    }
+
+    // Verify token with proper type definition
+    interface ResetTokenPayload {
+      id: string | number; // Use the same field name as in your token creation
+      email: string;
+      [key: string]: any; // Allow for additional properties
+    }
+
+    const decoded = jwt.verify(token, env.JWT_SECRET) as ResetTokenPayload;
+
+    // Convert ID to number if it's a string
+    const userId =
+      typeof decoded.id === "string" ? parseInt(decoded.id, 10) : decoded.id;
+    const user = await UserModel.findById(userId);
 
     if (!user || !user.id) {
       res.status(400).json({
@@ -315,11 +406,24 @@ export const resetPassword = async (
       success: true,
       message: "Password has been reset successfully",
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Password reset error:", error);
     res.status(500).json({
       success: false,
       message: "An error occurred resetting your password",
+    });
+  }
+};
+
+export const testSecret = (req: Request, res: Response) => {
+  try {
+    const testToken = jwt.sign({ test: true }, env.JWT_SECRET as string);
+    res.json({ success: true, token: testToken });
+  } catch (error) {
+    console.error("Secret test failed:", error);
+    res.status(500).json({
+      success: false,
+      error: "JWT_SECRET configuration error",
     });
   }
 };

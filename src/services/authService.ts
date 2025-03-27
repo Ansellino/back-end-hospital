@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken"; // Add JwtPayload import
 import bcryptjs from "bcryptjs";
 import UserModel from "../models/User";
 import {
@@ -38,6 +38,11 @@ export const login = async ({
       throw new Error("User ID is missing");
     }
 
+    // Check JWT_SECRET is available before using it
+    if (!env.JWT_SECRET) {
+      throw new Error("JWT secret is not configured");
+    }
+
     // Generate JWT token with userId instead of id to match controller
     const tokenPayload: TokenPayload = {
       userId: user.id, // Changed from id to userId
@@ -45,8 +50,9 @@ export const login = async ({
       role: user.role,
     };
 
+    // Now TypeScript knows env.JWT_SECRET is not null/undefined
     const token = jwt.sign(tokenPayload, env.JWT_SECRET, {
-      expiresIn: (env.JWT_EXPIRATION = "24h"),
+      expiresIn: "24h", // Corrected line
     });
 
     // Return user data (without password) and token
@@ -173,13 +179,23 @@ export const resetPassword = async (
   newPassword: string
 ): Promise<boolean> => {
   try {
-    // Verify token
-    const decoded = jwt.verify(token, env.JWT_SECRET) as jwt.JwtPayload & {
-      userId: string; // Changed from id to userId
-    };
+    // Define a proper interface for your reset token payload
+    interface ResetTokenPayload extends JwtPayload {
+      userId: string;
+      email: string;
+      [key: string]: any; // Allow for additional properties
+    }
+
+    // First verify the token exists and has a valid structure
+    if (!env.JWT_SECRET) {
+      throw new Error("JWT secret is not configured");
+    }
+
+    // Use a proper type assertion approach with the extended interface
+    const decoded = jwt.verify(token, env.JWT_SECRET) as ResetTokenPayload;
 
     // Convert string ID to number
-    const userId = parseInt(decoded.userId, 10); // Changed from id to userId
+    const userId = parseInt(decoded.userId, 10);
 
     if (isNaN(userId)) {
       throw new Error("Invalid user ID in token");
@@ -187,6 +203,7 @@ export const resetPassword = async (
 
     const user = await UserModel.findById(userId);
 
+    // Rest of function remains unchanged
     if (!user) {
       throw new Error("Invalid or expired token");
     }
@@ -229,7 +246,21 @@ export const resetPassword = async (
  */
 export const verifyToken = (token: string): TokenPayload => {
   try {
-    return jwt.verify(token, env.JWT_SECRET) as TokenPayload;
+    if (!env.JWT_SECRET) {
+      throw new Error("JWT secret is not configured");
+    }
+
+    // First decode as any to bypass the TypeScript error
+    const decodedRaw = jwt.verify(token, env.JWT_SECRET) as any;
+
+    // Then explicitly construct a TokenPayload object with the correct structure
+    const tokenPayload: TokenPayload = {
+      userId: decodedRaw.userId || decodedRaw.id || decodedRaw.sub || 0,
+      email: decodedRaw.email || "",
+      role: decodedRaw.role || "",
+    };
+
+    return tokenPayload;
   } catch (error) {
     logger.error("Error in authService.verifyToken:", error);
     throw new Error("Invalid token");

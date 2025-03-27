@@ -1,23 +1,30 @@
 import db from "../../config/database";
-import bcryptjs from "bcryptjs";
 import { logger } from "../../utils/logger";
+import bcryptjs from "bcryptjs";
 
 export const seed = async () => {
   try {
     const now = new Date().toISOString();
-    const hashedPassword = await bcryptjs.hash("password123", 10);
+
+    // Use the exact passwords from mockAuthService.ts
+    const adminPassword = await bcryptjs.hash("admin123", 10);
+    const doctorPassword = await bcryptjs.hash("doctor123", 10);
+    const nursePassword = await bcryptjs.hash("nurse123", 10);
+    const receptionistPassword = await bcryptjs.hash("reception123", 10);
 
     // Insert users
     logger.info("Seeding users...");
-    
-    // Admin user
-    db.prepare(`
+
+    // Admin user - fixed to match mockAuthService
+    db.prepare(
+      `
       INSERT INTO users (username, email, password, firstName, lastName, role, permissions, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `
+    ).run(
       "admin",
-      "admin@hospital.com",
-      hashedPassword,
+      "admin@healthcare.com", // Changed to match mockAuthService
+      adminPassword, // Changed to match mockAuthService
       "Admin",
       "User",
       "admin",
@@ -27,61 +34,77 @@ export const seed = async () => {
     );
 
     // Doctor user
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO users (username, email, password, firstName, lastName, role, permissions, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `
+    ).run(
       "doctor",
-      "doctor@hospital.com",
-      hashedPassword,
+      "doctor@healthcare.com", // Changed domain to match mockAuthService
+      doctorPassword, // Changed to match mockAuthService
       "John",
       "Smith",
       "doctor",
       JSON.stringify([
         "view:patients",
-        "create:medical-records",
+        "edit:patients",
+        "view:appointments",
+        "create:appointments",
         "edit:appointments",
+        "view:medical-records",
+        "create:medical-records",
+        "edit:medical-records",
       ]),
       now,
       now
     );
 
     // Nurse user
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO users (username, email, password, firstName, lastName, role, permissions, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `
+    ).run(
       "nurse",
-      "nurse@hospital.com",
-      hashedPassword,
+      "nurse@healthcare.com", // Changed domain to match mockAuthService
+      nursePassword, // Changed to match mockAuthService
       "Jane",
       "Doe",
       "nurse",
-      JSON.stringify(["view:patients", "view:medical-records"]),
+      JSON.stringify([
+        "view:patients",
+        "view:appointments",
+        "view:medical-records",
+      ]),
       now,
       now
     );
 
     // Receptionist user
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO users (username, email, password, firstName, lastName, role, permissions, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `
+    ).run(
       "receptionist",
-      "receptionist@hospital.com",
-      hashedPassword,
+      "reception@healthcare.com", // Changed to match mockAuthService
+      receptionistPassword, // Changed to match mockAuthService
       "Mary",
       "Johnson",
       "receptionist",
       JSON.stringify([
         "view:patients",
+        "create:patients",
+        "view:appointments",
         "create:appointments",
-        "edit:appointments",
       ]),
       now,
       now
     );
-    
+
     logger.info("Users seeded successfully");
   } catch (error) {
     logger.error("Error seeding users:", error);

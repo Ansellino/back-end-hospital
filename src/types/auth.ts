@@ -8,6 +8,13 @@ export interface TokenPayload {
   userId: number; // Changed from id to userId to match controller
   email: string;
   role: string;
+  [key: string]: any;
+}
+
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: TokenPayload;
+  }
 }
 
 // Re-export the User type from user.ts

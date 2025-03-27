@@ -9,9 +9,7 @@ if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
 
-const db = new Database(env.DB_PATH, {
-  verbose: console.log, // This will log all SQL statements
-});
+const db = require("better-sqlite3")(env.DB_PATH);
 
 // Enable foreign keys
 db.pragma("foreign_keys = ON");

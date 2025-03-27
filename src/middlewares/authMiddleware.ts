@@ -31,17 +31,32 @@ export const authenticate = async (
 
   const token = authHeader.split(" ")[1];
 
+  // Check if JWT_SECRET is defined
+  if (!env.JWT_SECRET) {
+    console.error("JWT_SECRET is not defined");
+    res.status(500).json(errorResponse("Server configuration error"));
+    return;
+  }
+
   try {
-    // Cast the decoded token to any to handle different structures
-    const decoded = jwt.verify(token, env.JWT_SECRET) as any;
+    // Use a proper type assertion with non-null assertion for JWT_SECRET
+    const decoded = jwt.verify(token, env.JWT_SECRET) as jwt.JwtPayload;
 
     // Normalize the token data structure based on what might be available
     req.user = {
-      userId: decoded.userId || decoded.id || decoded.sub,
-      role: decoded.role,
-      // Include any other useful properties from the token
-      email: decoded.email,
-      permissions: decoded.permissions || [],
+      userId:
+        typeof decoded.userId === "number"
+          ? decoded.userId
+          : typeof decoded.id === "number"
+          ? decoded.id
+          : typeof decoded.sub === "number"
+          ? decoded.sub
+          : 0,
+      role: decoded.role as string,
+      email: decoded.email as string,
+      permissions: Array.isArray(decoded.permissions)
+        ? decoded.permissions
+        : [],
     };
 
     next();
